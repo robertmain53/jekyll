@@ -81,6 +81,7 @@ module Jekyll
       self.render
       self.cleanup
       self.write
+      self.write_archives
     end
 
     def read
@@ -139,17 +140,6 @@ module Jekyll
     end
 
     def render
-      self.posts.each do |post|
-        post.render(self.layouts, site_payload)
-      end
-
-      self.pages.each do |page|
-        page.render(self.layouts, site_payload)
-      end
-
-      self.categories.values.map { |ps| ps.sort! { |a, b| b <=> a} }
-      self.tags.values.map { |ps| ps.sort! { |a, b| b <=> a} }
-      
       self.posts.reverse.each do |post|
         y, m, d = post.date.year, post.date.month, post.date.day
         unless self.collated.key? y
@@ -163,6 +153,17 @@ module Jekyll
         end
         self.collated[ y ][ m ][ d ] += [ post ]
       end
+      
+      self.posts.each do |post|
+        post.render(self.layouts, site_payload)
+      end
+
+      self.pages.each do |page|
+        page.render(self.layouts, site_payload)
+      end
+
+      self.categories.values.map { |ps| ps.sort! { |a, b| b <=> a} }
+      self.tags.values.map { |ps| ps.sort! { |a, b| b <=> a} }
     rescue Errno::ENOENT => e
       # ignore missing layout dir
     end
@@ -210,6 +211,19 @@ module Jekyll
       self.static_files.each do |sf|
         sf.write(self.dest)
       end
+    end
+    
+    #   Write post archives to <dest>/<year>/, <dest>/<year>/<month>/
+    #   Use layouts called archive_yearly and archive_monthly if avail
+    #
+    #   Returns nothing
+    def write_archive( dir, type )
+        archive = Archive.new( self, self.source, dir, type )
+        archive.render( self.layouts, site_payload )
+        archive.write( self.dest )
+    end
+    
+    def write_archives
       self.collated.keys.each do |y|
           if self.layouts.key? 'archive_yearly'
               self.write_archive( y.to_s, 'archive_yearly' )
@@ -228,17 +242,6 @@ module Jekyll
           end
       end
     end
-    
-    #   Write post archives to <dest>/<year>/, <dest>/<year>/<month>/
-    #   Use layouts called archive_yearly and archive_monthly if avail
-    #
-    #   Returns nothing
-    def write_archive( dir, type )
-        archive = Archive.new( self, self.source, dir, type )
-        archive.render( self.layouts, site_payload )
-        archive.write( self.dest )
-    end
-    
     
     # Reads the directories and finds posts, pages and static files that will
     # become part of the valid site according to the rules in +filter_entries+.
