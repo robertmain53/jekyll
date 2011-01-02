@@ -8,6 +8,20 @@ module Jekyll
       TextileConverter.new.convert(input)
     end
 
+    def markdownize(input)
+      if input
+        if defined? RDiscount
+          RDiscount.new(input, :smart).to_html 
+        elsif defined? Maruku
+          Maruku.new(input, :smart).to_html
+        else
+          input
+        end
+      else
+        ''
+      end
+    end
+
     def date_to_string(date)
       date.strftime("%d %b %Y")
     end
@@ -41,6 +55,14 @@ module Jekyll
     # e.g. {{ content | before_fold }}
     def before_fold(input)
       input.split("<!--more-->").first
+    end
+    
+    def to_month(input)
+      return Date::MONTHNAMES[input.to_i]
+    end
+
+    def to_month_abbr(input)
+      return Date::ABBR_MONTHNAMES[input.to_i]
     end
 
     def array_to_sentence_string(array)

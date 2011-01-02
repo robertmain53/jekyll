@@ -35,6 +35,7 @@ require 'jekyll/filters'
 require 'jekyll/albino'
 require 'jekyll/static_file'
 require 'jekyll/errors'
+require 'jekyll/archive'
 
 # extensions
 require 'jekyll/plugin'
