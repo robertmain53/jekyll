@@ -76,10 +76,6 @@ opts = OptionParser.new do |opts|
     options['multiviews'] = true
   end
   
-  opts.on("--sass", "Use Sass from haml gem for CSS generation") do
-    options['sass'] = true
-  end
-  
   opts.on("--paginate [POSTS_PER_PAGE]", "Paginate a blog's posts") do |per_page|
     begin
       options['paginate'] = per_page.to_i
