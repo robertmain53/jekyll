@@ -29,6 +29,20 @@ module Jekyll
     def date_to_long_string(date)
       date.strftime("%d %B %Y")
     end
+    
+    def date_to_long_day(date)
+      day = date.strftime("%d").to_i
+      if (day == 1 || day == 21 || day == 31)
+        long_day = 'st'
+      elsif (day == 2 || day == 22)
+        long_day = 'nd'
+      elsif (day == 3 || day == 23)
+        long_day = 'rd'
+      else
+        long_day = 'th'
+      end
+      return day.to_s + long_day
+    end
 
     def date_to_xmlschema(date)
       date.xmlschema
