@@ -87,7 +87,7 @@ module Jekyll
     #
     # Returns <String>
     def dir
-      File.dirname(url)
+      File.dirname(generated_path)
     end
 
     # The full path and filename of the post.
@@ -116,10 +116,10 @@ module Jekyll
     # e.g. /2008/11/05/my-awesome-post.html
     #
     # Returns <String>
-    def url
+    def generated_path
       return permalink if permalink
 
-      @url ||= {
+      @generated_path ||= {
         "year"       => date.strftime("%Y"),
         "month"      => date.strftime("%m"),
         "day"        => date.strftime("%d"),
@@ -131,6 +131,14 @@ module Jekyll
       }.inject(template) { |result, token|
         result.gsub(/:#{Regexp.escape token.first}/, token.last)
       }.gsub(/\/\//, "/")
+    end
+    
+    # The generated relative url of this post
+    # e.g. /2008/11/05/my-awesome-post
+    #
+    # Returns <String>
+    def url
+      site.config['multiviews'] ? generated_path.sub(/\.html$/, '') : generated_path
     end
 
     # The UID for this post (useful in feeds)
@@ -184,7 +192,7 @@ module Jekyll
     # Returns destination file path.
     def destination(dest)
       # The url needs to be unescaped in order to preserve the correct filename
-      path = File.join(dest, CGI.unescape(self.url))
+      path = File.join(dest, CGI.unescape(self.generated_path))
       path = File.join(path, "index.html") if template[/\.html$/].nil?
       path
     end
@@ -211,6 +219,7 @@ module Jekyll
         "date"       => self.date,
         "id"         => self.id,
         "categories" => self.categories,
+        "folded" => (self.content.match("<!--more-->") ? true : false),
         "next"       => self.next,
         "previous"   => self.previous,
         "tags"       => self.tags,

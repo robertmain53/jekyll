@@ -4,6 +4,7 @@ module Jekyll
 
   module Filters
     def textilize(input)
+      #RedCloth.new(input).to_html
       TextileConverter.new.convert(input)
     end
 
@@ -33,6 +34,13 @@ module Jekyll
 
     def number_of_words(input)
       input.split.length
+    end
+    
+    # Returns all content before the first-encountered WP-style MORE tag.
+    # Allows authors to mark the fold with an <!--more--> in their drafts.
+    # e.g. {{ content | before_fold }}
+    def before_fold(input)
+      input.split("<!--more-->").first
     end
 
     def array_to_sentence_string(array)

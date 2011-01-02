@@ -47,7 +47,7 @@ module Jekyll
 
     def setup
       require 'classifier' if self.lsi
-
+    
       # If safe mode is off, load in any ruby files under the plugins
       # directory.
       unless self.safe
@@ -228,6 +228,7 @@ module Jekyll
         end
       end
     end
+    
 
     # Constructs a hash map of Posts indexed by the specified Post attribute
     #
