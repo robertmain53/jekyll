@@ -1,8 +1,8 @@
 module Jekyll
 
   class Site
-    attr_accessor :config, :layouts, :posts, :pages, :static_files,
-                  :categories, :exclude, :source, :dest, :lsi, :pygments,
+    attr_accessor :config, :layouts, :posts, :pages, :static_files, :bits,
+                  :categories, :exclude, :source, :dest, :lsi, :pygments, :limit_bits,
                   :permalink_style, :tags, :time, :future, :safe, :plugins, :limit_posts, :collated
 
     attr_accessor :converters, :generators
@@ -24,6 +24,7 @@ module Jekyll
       self.exclude         = config['exclude'] || []
       self.future          = config['future']
       self.limit_posts     = config['limit_posts'] || nil
+      self.limit_bits      = config['limit_bits'] || nil
 
       self.reset
       self.setup
@@ -38,11 +39,13 @@ module Jekyll
       self.layouts         = {}
       self.posts           = []
       self.pages           = []
+      self.bits            = []
       self.static_files    = []
       self.categories      = Hash.new { |hash, key| hash[key] = [] }
       self.tags            = Hash.new { |hash, key| hash[key] = [] }
       self.collated        = {}
       raise ArgumentError, "Limit posts must be nil or >= 1" if !self.limit_posts.nil? && self.limit_posts < 1
+      raise ArgumentError, "Limit bits must be nil or >= 1" if !self.limit_bits.nil? && self.limit_bits < 1
     end
 
     def setup
@@ -132,6 +135,34 @@ module Jekyll
       # limit the posts if :limit_posts option is set
       self.posts = self.posts[-limit_posts, limit_posts] if limit_posts
     end
+    
+    # Read all the files in <source>/<dir>/_bits and create a new Bit
+    # object with each one.
+    #
+    # Returns nothing
+    def read_bits(dir)
+      base = File.join(self.source, dir, '_bits')
+      return unless File.exists?(base)
+      entries = Dir.chdir(base) { filter_entries(Dir['**/*']) }
+
+      # first pass processes, but does not yet render post content
+      entries.each do |f|
+        if Bit.valid?(f)
+          bit = Bit.new(self, self.source, dir, f)
+
+          if bit.published && (self.future || bit.date <= self.time)
+            self.bits << bit
+            bit.categories.each { |c| self.categories[c] << bit }
+            bit.tags.each { |c| self.tags[c] << bit }
+          end
+        end
+      end
+
+      self.bits.sort!
+
+      # limit the posts if :limit_bits option is set
+      self.bits = self.bits[-limit_bits, limit_bits] if limit_bits
+    end
 
     def generate
       self.generators.each do |generator|
@@ -156,6 +187,10 @@ module Jekyll
       
       self.posts.each do |post|
         post.render(self.layouts, site_payload)
+      end
+      
+      self.bits.each do |bit|
+        bit.render(self.layouts, site_payload)
       end
 
       self.pages.each do |page|
@@ -183,6 +218,9 @@ module Jekyll
       self.posts.each do |post|
         files << post.destination(self.dest)
       end
+      self.bits.each do |bit|
+        files << bit.destination(self.dest)
+      end
       self.pages.each do |page|
         files << page.destination(self.dest)
       end
@@ -198,12 +236,15 @@ module Jekyll
       FileUtils.rm_rf(obsolete_files)
     end
 
-    # Write static files, pages and posts
+    # Write static files, pages, posts and bits
     #
     # Returns nothing
     def write
       self.posts.each do |post|
         post.write(self.dest)
+      end
+      self.bits.each do |bit|
+        bit.write(self.dest)
       end
       self.pages.each do |page|
         page.write(self.dest)
@@ -254,6 +295,7 @@ module Jekyll
       entries = filter_entries(Dir.entries(base))
 
       self.read_posts(dir)
+      self.read_bits(dir) #blah?
 
       entries.each do |f|
         f_abs = File.join(base, f)
@@ -286,6 +328,18 @@ module Jekyll
       hash.values.map { |sortme| sortme.sort! { |a, b| b <=> a} }
       return hash
     end
+    
+    # Constructs a hash map of Bits indexed by the specified Bit attribute
+    #
+    # Returns {bit_attr => [<Bit>]}
+    def bit_attr_hash(bit_attr)
+      # Build a hash map based on the specified bit attribute ( bit attr => array of bits )
+      # then sort each array in reverse order
+      hash = Hash.new { |hash, key| hash[key] = Array.new }
+      self.bits.each { |b| b.send(bit_attr.to_sym).each { |t| hash[t] << b } }
+      hash.values.map { |sortme| sortme.sort! { |x, y| y <=> x} }
+      return hash
+    end
 
     # The Hash payload containing site-wide data
     #
@@ -298,9 +352,12 @@ module Jekyll
       {"site" => self.config.merge({
           "time"            => self.time,
           "posts"           => self.posts.sort { |a,b| b <=> a },
+          "bits"            => self.bits.sort { |a,b| b <=> a },
           "collated_posts"  => self.collated,
           "pages"           => self.pages,
           "html_pages"      => self.pages.reject { |page| !page.html? },
+          "bit_tags"        => bit_attr_hash('tags'),
+          "bit_categories"  => bit_attr_hash('categories'),
           "categories"      => post_attr_hash('categories'),
           "tags"            => post_attr_hash('tags')})}
     end

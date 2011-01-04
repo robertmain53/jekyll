@@ -95,6 +95,16 @@ opts = OptionParser.new do |opts|
       exit 0
     end
   end
+  
+  opts.on("--limit_bits [MAX_BITS]", "Limit the number of bits to publish") do |limit_bits|
+    begin
+      options['limit_bits'] = limit_bits.to_i
+      raise ArgumentError if options['limit_bits'] < 1
+    rescue
+      puts 'you must specify a number of bits by page bigger than 0'
+      exit 0
+    end
+  end
 
   opts.on("--url [URL]", "Set custom site.url") do |url|
     options['url'] = url
