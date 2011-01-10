@@ -56,6 +56,7 @@ Gem::Specification.new do |s|
     jekyll.gemspec
     lib/jekyll.rb
     lib/jekyll/albino.rb
+    lib/jekyll/bit.rb
     lib/jekyll/converter.rb
     lib/jekyll/converters/identity.rb
     lib/jekyll/converters/markdown.rb

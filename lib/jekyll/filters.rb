@@ -71,6 +71,10 @@ module Jekyll
       input.split("<!--more-->").first
     end
     
+    # convert newlines to <p> wraps?
+    def newline_parag 
+    end
+    
     def to_month(input)
       return Date::MONTHNAMES[input.to_i]
     end

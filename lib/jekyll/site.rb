@@ -295,7 +295,7 @@ module Jekyll
       entries = filter_entries(Dir.entries(base))
 
       self.read_posts(dir)
-      self.read_bits(dir) #blah?
+      self.read_bits(dir)
 
       entries.each do |f|
         f_abs = File.join(base, f)
@@ -341,6 +341,14 @@ module Jekyll
       return hash
     end
 
+    def post_bit_attr_hash(content_attr)
+      hash = Hash.new { |hash, key| hash[key] = Array.new }
+      self.posts.each { |p| p.send(content_attr.to_sym).each { |t| hash[t] << p } }
+      self.bits.each { |b| b.send(content_attr.to_sym).each { |t| hash[t] << b } }
+      hash.values.map { |sortme| sortme.sort! { |x, y| y <=> x} }
+      return hash
+    end
+
     # The Hash payload containing site-wide data
     #
     # Returns {"site" => {"time" => <Time>,
@@ -356,10 +364,12 @@ module Jekyll
           "collated_posts"  => self.collated,
           "pages"           => self.pages,
           "html_pages"      => self.pages.reject { |page| !page.html? },
-          "bit_tags"        => bit_attr_hash('tags'),
-          "bit_categories"  => bit_attr_hash('categories'),
-          "categories"      => post_attr_hash('categories'),
-          "tags"            => post_attr_hash('tags')})}
+          #"bit_tags"        => bit_attr_hash('tags'),
+          #"bit_categories"  => bit_attr_hash('categories'),
+          "tags"            => post_bit_attr_hash('tags'),
+          "categories"      => post_bit_attr_hash('categories')})}
+          #"categories"      => post_attr_hash('categories'),
+          #"tags"            => post_attr_hash('tags')})}
     end
 
     # Filter out any files/directories that are hidden or backup files (start
