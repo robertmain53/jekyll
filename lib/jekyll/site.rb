@@ -176,8 +176,8 @@ module Jekyll
 
       # first pass processes, but does not yet render post content
       entries.each do |f|
-        if photo.valid?(f)
-          photo = photo.new(self, self.source, dir, f)
+        if Photo.valid?(f)
+          photo = Photo.new(self, self.source, dir, f)
 
           if photo.published && (self.future || photo.date <= self.time)
             self.photos << photo
