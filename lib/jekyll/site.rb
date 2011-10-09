@@ -1,7 +1,7 @@
 module Jekyll
 
   class Site
-    attr_accessor :config, :layouts, :posts, :pages, :static_files, :bits,
+    attr_accessor :config, :layouts, :posts, :pages, :static_files, :bits, :photos,
                   :categories, :exclude, :source, :dest, :lsi, :pygments, :limit_bits,
                   :permalink_style, :tags, :time, :future, :safe, :plugins, :limit_posts, :collated
 
@@ -40,6 +40,7 @@ module Jekyll
       self.posts           = []
       self.pages           = []
       self.bits            = []
+      self.photos          = []
       self.static_files    = []
       self.categories      = Hash.new { |hash, key| hash[key] = [] }
       self.tags            = Hash.new { |hash, key| hash[key] = [] }
@@ -163,6 +164,34 @@ module Jekyll
       # limit the posts if :limit_bits option is set
       self.bits = self.bits[-limit_bits, limit_bits] if limit_bits
     end
+    
+    # Read all the files in <source>/<dir>/_photos and create a new photo
+    # object with each one.
+    #
+    # Returns nothing
+    def read_photos(dir)
+      base = File.join(self.source, dir, '_photos')
+      return unless File.exists?(base)
+      entries = Dir.chdir(base) { filter_entries(Dir['**/*']) }
+
+      # first pass processes, but does not yet render post content
+      entries.each do |f|
+        if photo.valid?(f)
+          photo = photo.new(self, self.source, dir, f)
+
+          if photo.published && (self.future || photo.date <= self.time)
+            self.photos << photo
+            photo.categories.each { |c| self.categories[c] << photo }
+            photo.tags.each { |c| self.tags[c] << photo }
+          end
+        end
+      end
+
+      self.photos.sort!
+
+      # limit the posts if :limit_photos option is set
+      #self.photos = self.photos[-limit_photos, limit_photos] if limit_photos
+    end
 
     def generate
       self.generators.each do |generator|
@@ -191,6 +220,10 @@ module Jekyll
       
       self.bits.each do |bit|
         bit.render(self.layouts, site_payload)
+      end
+      
+      self.photos.each do |photo|
+        photo.render(self.layouts, site_payload)
       end
 
       self.pages.each do |page|
@@ -221,6 +254,9 @@ module Jekyll
       self.bits.each do |bit|
         files << bit.destination(self.dest)
       end
+      self.photos.each do |photo|
+        files << photo.destination(self.dest)
+      end
       self.pages.each do |page|
         files << page.destination(self.dest)
       end
@@ -245,6 +281,9 @@ module Jekyll
       end
       self.bits.each do |bit|
         bit.write(self.dest)
+      end
+      self.photos.each do |photo|
+        photo.write(self.dest)
       end
       self.pages.each do |page|
         page.write(self.dest)
@@ -296,6 +335,7 @@ module Jekyll
 
       self.read_posts(dir)
       self.read_bits(dir)
+      self.read_photos(dir)
 
       entries.each do |f|
         f_abs = File.join(base, f)
@@ -345,6 +385,7 @@ module Jekyll
       hash = Hash.new { |hash, key| hash[key] = Array.new }
       self.posts.each { |p| p.send(content_attr.to_sym).each { |t| hash[t] << p } }
       self.bits.each { |b| b.send(content_attr.to_sym).each { |t| hash[t] << b } }
+      self.photos.each  { |ph| ph.send(content_attr.to_sym).each { |t| hash[t] << ph } }
       hash.values.map { |sortme| sortme.sort! { |x, y| y <=> x} }
       return hash
     end
@@ -361,6 +402,7 @@ module Jekyll
           "time"            => self.time,
           "posts"           => self.posts.sort { |a,b| b <=> a },
           "bits"            => self.bits.sort { |a,b| b <=> a },
+          "photos"          => self.photos.sort { |a,b| b <=> a },
           "collated_posts"  => self.collated,
           "pages"           => self.pages,
           "html_pages"      => self.pages.reject { |page| !page.html? },
