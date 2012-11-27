@@ -22,6 +22,10 @@ module Jekyll
       end
     end
 
+    def date_to_string_formatted(date)
+      date.strftime("<span class='day'>%d</span><span class='month'>%b</span><span class='year'>%Y</span>")
+    end
+
     def date_to_string(date)
       date.strftime("%d %b %Y")
     end
@@ -67,8 +71,12 @@ module Jekyll
     # Returns all content before the first-encountered WP-style MORE tag.
     # Allows authors to mark the fold with an <!--more--> in their drafts.
     # e.g. {{ content | before_fold }}
-    def before_fold(input)
-      input.split("<!--more-->").first
+    def before_fold(input, url, title)
+      if input.include? "<!--more-->"
+        input.split("<!--more-->").first + " <a class='read_more' title='#{title}' href='#{url}'>Continue &raquo;</a>"
+      else
+        input
+      end
     end
     
     def to_month(input)
