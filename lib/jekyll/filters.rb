@@ -1,4 +1,5 @@
 require 'uri'
+require 'fastimage'
 
 module Jekyll
 
@@ -73,10 +74,20 @@ module Jekyll
     # e.g. {{ content | before_fold }}
     def before_fold(input, url, title)
       if input.include? "<!--more-->"
-        input.split("<!--more-->").first + " <a class='read_more' title='#{title}' href='#{url}'>Continue &raquo;</a>"
+        input.split("<!--more-->").first + " <a class='read_more' title='#{title}' href='#{url}'>Continue Reading &rarr;</a>"
       else
         input
       end
+    end
+
+    def image_width(url)
+      url = "http://stammy.imgix.net/" + url
+      FastImage.size(url).first
+    end
+
+    def image_height(url)
+      url = "http://stammy.imgix.net/" + url
+      FastImage.size(url).last
     end
     
     def to_month(input)
