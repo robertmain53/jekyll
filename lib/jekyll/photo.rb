@@ -149,9 +149,9 @@ module Jekyll
       File.join(self.dir, self.slug)
     end
 
-    # Calculate related bits.
+    # Calculate related photos.
     #
-    # Returns [<Bit>]
+    # Returns [<Photo>]
     def related_photos(photos)
       return [] unless photos.size > 1
 
