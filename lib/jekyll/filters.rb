@@ -1,5 +1,4 @@
 require 'uri'
-require 'fastimage'
 
 module Jekyll
 
@@ -78,16 +77,6 @@ module Jekyll
       else
         input
       end
-    end
-
-    def image_width(url)
-      url = "http://stammy.imgix.net/" + url
-      FastImage.size(url).first
-    end
-
-    def image_height(url)
-      url = "http://stammy.imgix.net/" + url
-      FastImage.size(url).last
     end
     
     def to_month(input)

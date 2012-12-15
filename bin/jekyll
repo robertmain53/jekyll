@@ -17,7 +17,6 @@ HELP
 
 require 'optparse'
 require 'jekyll'
-require 'fastimage'
 
 exec = {}
 options = {}

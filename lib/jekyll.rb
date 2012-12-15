@@ -23,7 +23,6 @@ require 'yaml'
 # 3rd party
 require 'liquid'
 require 'maruku'
-require 'fastimage'
 
 # internal requires
 require 'jekyll/core_ext'
